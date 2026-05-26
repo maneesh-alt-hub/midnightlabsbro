@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { createClientUser, listClients } from '../models/userModel.ts';
+import { createClientUser, listClients } from '../models/userModel.js';
 
 export const getClients = async (_req: Request, res: Response) => {
   const clients = await listClients();

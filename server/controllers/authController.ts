@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import type { Request, Response } from 'express';
-import { clearSessionCookie, getSessionUser, setSessionCookie, signSession } from '../middleware/authMiddleware.ts';
-import { createClientUser, findUserByEmail, toPublicUser } from '../models/userModel.ts';
+import { clearSessionCookie, getSessionUser, setSessionCookie, signSession } from '../middleware/authMiddleware.js';
+import { createClientUser, findUserByEmail, toPublicUser } from '../models/userModel.js';
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body as { email?: string; password?: string };

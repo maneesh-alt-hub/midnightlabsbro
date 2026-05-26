@@ -1,8 +1,8 @@
 import express from 'express';
-import { isDatabaseUnavailable } from './db/dbErrors.ts';
-import { authRoutes } from './routes/authRoutes.ts';
-import { projectRoutes } from './routes/projectRoutes.ts';
-import { userRoutes } from './routes/userRoutes.ts';
+import { isDatabaseUnavailable } from './db/dbErrors.js';
+import { authRoutes } from './routes/authRoutes.js';
+import { projectRoutes } from './routes/projectRoutes.js';
+import { userRoutes } from './routes/userRoutes.js';
 
 export const createApiApp = () => {
   const app = express();

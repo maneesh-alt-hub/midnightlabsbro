@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
-import type { AuthUser, Project, ProjectStatus } from '../types.ts';
-import type { ProjectInput } from '../models/projectModel.ts';
+import type { AuthUser, Project, ProjectStatus } from '../types.js';
+import type { ProjectInput } from '../models/projectModel.js';
 
 interface DevUser extends AuthUser {
   password: string;

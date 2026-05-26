@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { login, logout, session, signup } from '../controllers/authController.ts';
-import { asyncHandler } from '../middleware/asyncHandler.ts';
+import { login, logout, session, signup } from '../controllers/authController.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
 
 export const authRoutes = Router();
 

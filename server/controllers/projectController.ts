@@ -1,6 +1,6 @@
 import type { Response } from 'express';
-import type { AuthedRequest } from '../middleware/authMiddleware.ts';
-import { createProject, findProjectById, isStatus, listProjects, updateProject, type ProjectInput } from '../models/projectModel.ts';
+import type { AuthedRequest } from '../middleware/authMiddleware.js';
+import { createProject, findProjectById, isStatus, listProjects, updateProject, type ProjectInput } from '../models/projectModel.js';
 
 const parseProjectInput = (body: Record<string, unknown>): ProjectInput | null => {
   const status = String(body.status ?? '');

@@ -1,4 +1,4 @@
-import { createApiApp } from '../server/app.ts';
+import { createApiApp } from '../server/app.js';
 
 const app = createApiApp();
 

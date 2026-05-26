@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pool, query } from './pool.ts';
+import { pool, query } from './pool.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

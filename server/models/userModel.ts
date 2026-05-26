@@ -1,7 +1,7 @@
-import { query } from '../db/pool.ts';
-import { isDatabaseUnavailable } from '../db/dbErrors.ts';
-import { devStore } from '../db/devStore.ts';
-import type { AuthUser, UserRole } from '../types.ts';
+import { query } from '../db/pool.js';
+import { isDatabaseUnavailable } from '../db/dbErrors.js';
+import { devStore } from '../db/devStore.js';
+import type { AuthUser, UserRole } from '../types.js';
 
 interface UserRow extends AuthUser {
   password: string;

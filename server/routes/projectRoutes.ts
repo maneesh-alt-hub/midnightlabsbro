@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { getProject, getProjects, postProject, putProject } from '../controllers/projectController.ts';
-import { asyncHandler } from '../middleware/asyncHandler.ts';
-import { requireAuth } from '../middleware/authMiddleware.ts';
+import { getProject, getProjects, postProject, putProject } from '../controllers/projectController.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
+import { requireAuth } from '../middleware/authMiddleware.js';
 
 export const projectRoutes = Router();
 

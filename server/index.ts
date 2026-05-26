@@ -2,8 +2,8 @@ import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createServer as createViteServer } from 'vite';
-import { env, isProduction } from './config/env.ts';
-import { createApiApp } from './app.ts';
+import { env, isProduction } from './config/env.js';
+import { createApiApp } from './app.js';
 
 const root = process.cwd();
 const app = createApiApp();
