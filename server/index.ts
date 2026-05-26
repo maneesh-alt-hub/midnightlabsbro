@@ -3,29 +3,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createServer as createViteServer } from 'vite';
 import { env, isProduction } from './config/env.ts';
-import { isDatabaseUnavailable } from './db/dbErrors.ts';
-import { authRoutes } from './routes/authRoutes.ts';
-import { projectRoutes } from './routes/projectRoutes.ts';
-import { userRoutes } from './routes/userRoutes.ts';
+import { createApiApp } from './app.ts';
 
 const root = process.cwd();
-const app = express();
-const errorHandler = (error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(error);
-
-  if (isDatabaseUnavailable(error)) {
-    res.status(503).json({ error: 'Database is not connected. Start PostgreSQL and run the seed script, then try again.' });
-    return;
-  }
-
-  res.status(500).json({ error: 'Something went wrong on the server.' });
-};
-
-app.use(express.json());
-
-app.use('/api/auth', authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/users', userRoutes);
+const app = createApiApp();
 
 if (isProduction) {
   app.use(express.static(path.resolve(root, 'dist')));
@@ -51,8 +32,6 @@ if (isProduction) {
     }
   });
 }
-
-app.use(errorHandler);
 
 app.listen(env.port, () => {
   console.log(`Midnight Labs app running at ${env.appUrl}`);
