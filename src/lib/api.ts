@@ -10,7 +10,14 @@ const request = async <T>(url: string, options: RequestInit = {}) => {
     ...options,
   });
 
-  const data = (await response.json()) as T & { error?: string };
+  const responseText = await response.text();
+  let data = {} as T & { error?: string };
+  try {
+    data = responseText ? (JSON.parse(responseText) as T & { error?: string }) : data;
+  } catch {
+    throw new Error(response.ok ? 'Server returned an unreadable response.' : responseText || 'Request failed.');
+  }
+
   if (!response.ok) throw new Error(data.error ?? 'Request failed.');
 
   return data;
