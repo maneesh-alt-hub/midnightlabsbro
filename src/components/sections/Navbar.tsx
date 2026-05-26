@@ -42,9 +42,12 @@ export const Navbar = () => {
           <div className="hidden lg:block">
              <a href="#team" className="font-bold text-[10px] uppercase tracking-widest hover:text-brand-primary transition-colors text-brand-ink">Team</a>
           </div>
-          <button className="hidden sm:block bg-brand-ink text-white px-4 py-2 text-[10px] font-bold uppercase tracking-wider neo-border hover:bg-brand-primary transition-colors cursor-pointer active:translate-y-1">
-            Contact
-          </button>
+          <a
+            href="/login"
+            className="hidden sm:block bg-brand-ink text-white px-4 py-2 text-[10px] font-bold uppercase tracking-wider neo-border hover:bg-brand-primary transition-colors cursor-pointer active:translate-y-1"
+          >
+            Login
+          </a>
           
           {/* Mobile Menu Trigger */}
           <button 
@@ -75,9 +78,9 @@ export const Navbar = () => {
                 {link.name}
               </a>
             ))}
-            <button className="bg-brand-ink text-white px-6 py-4 font-black uppercase tracking-widest neo-border w-full">
-              CONTACT US
-            </button>
+            <a href="/login" className="bg-brand-ink text-white px-6 py-4 font-black uppercase tracking-widest neo-border w-full text-center">
+              LOGIN
+            </a>
           </motion.div>
         )}
       </AnimatePresence>

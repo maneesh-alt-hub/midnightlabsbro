@@ -28,8 +28,16 @@ import { CursorTrail } from './components/CursorTrail';
 import { ScrollProgress } from './components/ScrollProgress';
 import { BackToTop } from './components/BackToTop';
 import { LoadingScreen } from './components/LoadingScreen';
+import { LoginPage } from './pages/LoginPage.tsx';
+import { SignupPage } from './pages/SignupPage.tsx';
+import { AdminDashboard } from './pages/AdminDashboard.tsx';
+import { AdminProjectNew } from './pages/AdminProjectNew.tsx';
+import { AdminClientNew } from './pages/AdminClientNew.tsx';
+import { AdminProjectDetail } from './pages/AdminProjectDetail.tsx';
+import { ClientDashboard } from './pages/ClientDashboard.tsx';
+import { ClientProjectDetail } from './pages/ClientProjectDetail.tsx';
 
-export default function App() {
+const LandingPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -62,5 +70,22 @@ export default function App() {
       <Footer />
     </div>
   );
+};
+
+export default function App() {
+  const path = window.location.pathname;
+  const adminProjectMatch = path.match(/^\/admin\/projects\/([^/]+)$/);
+  const clientProjectMatch = path.match(/^\/client\/projects\/([^/]+)$/);
+
+  if (path === '/login') return <LoginPage />;
+  if (path === '/signup') return <SignupPage />;
+  if (path === '/admin/dashboard') return <AdminDashboard />;
+  if (path === '/admin/clients/new') return <AdminClientNew />;
+  if (path === '/admin/projects/new') return <AdminProjectNew />;
+  if (path === '/client/dashboard') return <ClientDashboard />;
+  if (adminProjectMatch) return <AdminProjectDetail id={adminProjectMatch[1]} />;
+  if (clientProjectMatch) return <ClientProjectDetail id={clientProjectMatch[1]} />;
+
+  return <LandingPage />;
 }
 
