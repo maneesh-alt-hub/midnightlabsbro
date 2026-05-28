@@ -73,6 +73,12 @@ export const createClientUser = async (input: { name: string; email: string; pas
   return data;
 };
 
+export const updateUserPassword = async (id: string, password: string) => {
+  const { error } = await getSupabase().from('users').update({ password }).eq('id', id);
+
+  if (error) throw new Error(error.message);
+};
+
 export const toPublicUser = publicUser;
 
 export const isRole = (value: string): value is UserRole => value === 'admin' || value === 'client';
