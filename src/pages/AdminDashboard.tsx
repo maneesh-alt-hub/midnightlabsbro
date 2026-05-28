@@ -1,10 +1,14 @@
 import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, UserPlus } from 'lucide-react';
-import { dashboardPath, getProjects, getSession } from '../lib/api.ts';
-import type { AuthUser, Project, ProjectStatus } from '../types/dashboard.ts';
+import { FolderPlus, UserPlus } from 'lucide-react';
+import { createClient, createProject, dashboardPath, getClients, getProjects, getSession } from '../lib/api.ts';
+import { formatDate, formatMoney } from '../lib/format.ts';
+import type { AuthUser, Project, ProjectPayload, ProjectStatus } from '../types/dashboard.ts';
+import { ClientForm } from '../components/dashboard/ClientForm.tsx';
+import { DashboardModal } from '../components/dashboard/DashboardModal.tsx';
 import { DashboardShell } from '../components/dashboard/DashboardShell.tsx';
-import { ProjectCard } from '../components/dashboard/ProjectCard.tsx';
+import { ProjectForm } from '../components/dashboard/ProjectForm.tsx';
+import { StatusBadge } from '../components/dashboard/StatusBadge.tsx';
 
 const filters: Array<{ label: string; value: ProjectStatus | '' }> = [
   { label: 'All', value: '' },
@@ -15,14 +19,17 @@ const filters: Array<{ label: string; value: ProjectStatus | '' }> = [
 
 export const AdminDashboard = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [clients, setClients] = useState<AuthUser[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [filter, setFilter] = useState<ProjectStatus | ''>('');
+  const [modal, setModal] = useState<'client' | 'project' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadProjects = async (nextFilter = filter) => {
-    const { projects } = await getProjects(nextFilter || undefined);
-    setProjects(projects);
+  const loadDashboard = async (nextFilter = filter) => {
+    const [projectResponse, clientResponse] = await Promise.all([getProjects(nextFilter || undefined), getClients()]);
+    setProjects(projectResponse.projects);
+    setClients(clientResponse.clients);
   };
 
   useEffect(() => {
@@ -37,8 +44,7 @@ export const AdminDashboard = () => {
           return;
         }
         setUser(user);
-        const { projects } = await getProjects();
-        setProjects(projects);
+        await loadDashboard('');
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Unable to load dashboard.'))
       .finally(() => setIsLoading(false));
@@ -57,16 +63,16 @@ export const AdminDashboard = () => {
   if (isLoading || !user) return <LoadingScreen />;
 
   return (
-    <DashboardShell title="Admin dashboard" subtitle="A focused workspace for clients, projects, status, and financials." user={user}>
-      <section className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Projects" value={summary.total} />
-          <Stat label="In progress" value={summary.active} />
+    <DashboardShell title="Admin Dashboard" subtitle="Manage clients, projects, status, deadlines, and financials." user={user}>
+      <section className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat label="Total Projects" value={summary.total} />
+          <Stat label="In Progress" value={summary.active} />
           <Stat label="Completed" value={summary.completed} />
-          <Stat label="Not started" value={summary.notStarted} />
+          <Stat label="Not Started" value={summary.notStarted} />
         </div>
 
-        <div className="flex flex-col gap-4 bg-white p-5 neo-border neo-shadow sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 bg-white p-3 neo-border neo-shadow sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap gap-2">
             {filters.map((item) => (
               <button
@@ -74,9 +80,9 @@ export const AdminDashboard = () => {
                 type="button"
                 onClick={async () => {
                   setFilter(item.value);
-                  await loadProjects(item.value);
+                  await loadDashboard(item.value);
                 }}
-                className={`px-4 py-3 text-xs font-black uppercase tracking-widest neo-border ${
+                className={`px-3 py-2 text-[11px] font-black uppercase tracking-widest neo-border ${
                   filter === item.value ? 'bg-brand-ink text-white' : 'bg-brand-cream text-brand-ink'
                 }`}
               >
@@ -84,63 +90,144 @@ export const AdminDashboard = () => {
               </button>
             ))}
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <a
-              href="/admin/clients/new"
-              className="inline-flex items-center justify-center gap-2 bg-brand-sand px-4 py-3 text-xs font-black uppercase tracking-widest text-brand-ink neo-border neo-shadow-hover"
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setModal('client')}
+              className="inline-flex items-center gap-2 bg-brand-sand px-3 py-2 text-[11px] font-black uppercase tracking-widest text-brand-ink neo-border neo-shadow-hover"
             >
-              <UserPlus size={16} />
-              New client
-            </a>
-            <a
-              href="/admin/projects/new"
-              className="inline-flex items-center justify-center gap-2 bg-brand-primary px-4 py-3 text-xs font-black uppercase tracking-widest text-white neo-border neo-shadow-hover"
+              <UserPlus size={15} />
+              New Client
+            </button>
+            <button
+              type="button"
+              onClick={() => setModal('project')}
+              className="inline-flex items-center gap-2 bg-brand-primary px-3 py-2 text-[11px] font-black uppercase tracking-widest text-white neo-border neo-shadow-hover"
             >
-              <Plus size={16} />
-              New project
-            </a>
+              <FolderPlus size={15} />
+              New Project
+            </button>
           </div>
         </div>
 
-        {error && <p className="bg-brand-primary px-3 py-3 text-sm font-bold text-white neo-border">{error}</p>}
+        {error && <p className="bg-brand-primary px-3 py-2 text-xs font-bold text-white neo-border">{error}</p>}
 
-        {projects.length === 0 ? (
-          <div className="bg-white p-8 text-center neo-border neo-shadow">
-            <p className="text-xs font-black uppercase tracking-widest text-brand-primary">No projects yet</p>
-            <h2 className="mt-3 text-3xl font-black uppercase tracking-normal">Start with a client account.</h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-brand-ink/65">
-              Create a client account first, then add a project from the project form. New projects will appear here in a clean list.
-            </p>
-            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-              <a href="/admin/clients/new" className="bg-brand-sand px-5 py-4 text-sm font-black uppercase tracking-widest neo-border neo-shadow-hover">
-                Create client
-              </a>
-              <a href="/admin/projects/new" className="bg-brand-primary px-5 py-4 text-sm font-black uppercase tracking-widest text-white neo-border neo-shadow-hover">
-                Create project
-              </a>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} href={`/admin/projects/${project.id}`} showClient />
-            ))}
-          </div>
-        )}
+        <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+          <ProjectTable projects={projects} />
+          <ClientList clients={clients} />
+        </div>
       </section>
+
+      {modal === 'client' && (
+        <DashboardModal title="New Client" onClose={() => setModal(null)}>
+          <ClientForm
+            submitLabel="Create Client"
+            onSubmit={async (payload) => {
+              await createClient(payload);
+              await loadDashboard();
+              setModal(null);
+            }}
+          />
+        </DashboardModal>
+      )}
+
+      {modal === 'project' && (
+        <DashboardModal title="New Project" onClose={() => setModal(null)}>
+          {clients.length === 0 ? (
+            <p className="bg-brand-cream p-3 text-sm font-bold neo-border">
+              Add a client before creating a project. Use the New Client button first.
+            </p>
+          ) : (
+            <ProjectForm
+              clients={clients}
+              submitLabel="Create Project"
+              onSubmit={async (payload: ProjectPayload) => {
+                await createProject(payload);
+                await loadDashboard();
+                setModal(null);
+              }}
+            />
+          )}
+        </DashboardModal>
+      )}
     </DashboardShell>
   );
 };
 
 const Stat = ({ label, value }: { label: string; value: number }) => (
-  <div className="bg-white p-5 neo-border neo-shadow">
-    <p className="text-xs font-black uppercase tracking-widest text-brand-ink/55">{label}</p>
-    <p className="mt-3 text-4xl font-black leading-none">{value}</p>
+  <div className="bg-white p-3 neo-border neo-shadow">
+    <p className="text-[10px] font-black uppercase tracking-widest text-brand-ink/55">{label}</p>
+    <p className="mt-1 text-2xl font-black leading-none">{value}</p>
   </div>
+);
+
+const ProjectTable = ({ projects }: { projects: Project[] }) => (
+  <section className="overflow-hidden bg-white neo-border neo-shadow">
+    <header className="flex items-center justify-between border-b-2 border-brand-ink px-3 py-2">
+      <h2 className="text-sm font-black uppercase tracking-normal">Projects</h2>
+      <span className="text-[10px] font-black uppercase tracking-widest text-brand-ink/50">{projects.length} total</span>
+    </header>
+    {projects.length === 0 ? (
+      <p className="p-3 text-sm font-bold text-brand-ink/65">No projects yet. Create a client, then add their first project.</p>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] border-collapse text-left">
+          <thead className="bg-brand-cream">
+            <tr className="border-b-2 border-brand-ink text-[10px] font-black uppercase tracking-widest text-brand-ink/55">
+              <th className="px-3 py-2">Project</th>
+              <th className="px-3 py-2">Client</th>
+              <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Deadline</th>
+              <th className="px-3 py-2 text-right">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((project) => (
+              <tr
+                key={project.id}
+                onClick={() => window.location.assign(`/admin/projects/${project.id}`)}
+                className="cursor-pointer border-b border-brand-ink/20 text-sm font-bold hover:bg-brand-sand/45"
+              >
+                <td className="px-3 py-2 font-black uppercase">{project.name}</td>
+                <td className="px-3 py-2 text-brand-ink/70">{project.client_name}</td>
+                <td className="px-3 py-2">
+                  <StatusBadge status={project.status} />
+                </td>
+                <td className="px-3 py-2">{formatDate(project.deadline)}</td>
+                <td className="px-3 py-2 text-right">{formatMoney(project.total_price)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </section>
+);
+
+const ClientList = ({ clients }: { clients: AuthUser[] }) => (
+  <aside className="bg-white neo-border neo-shadow">
+    <header className="flex items-center justify-between border-b-2 border-brand-ink px-3 py-2">
+      <h2 className="text-sm font-black uppercase tracking-normal">Clients</h2>
+      <span className="text-[10px] font-black uppercase tracking-widest text-brand-ink/50">{clients.length} total</span>
+    </header>
+    {clients.length === 0 ? (
+      <p className="p-3 text-sm font-bold text-brand-ink/65">No client accounts yet.</p>
+    ) : (
+      <div className="divide-y divide-brand-ink/20">
+        {clients.map((client) => (
+          <div key={client.id} className="px-3 py-2">
+            <p className="text-sm font-black uppercase tracking-normal">{client.name}</p>
+            <p className="truncate text-xs font-bold text-brand-ink/65">{client.email}</p>
+            <p className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-widest text-brand-primary">{client.company || 'No company'}</p>
+          </div>
+        ))}
+      </div>
+    )}
+  </aside>
 );
 
 const LoadingScreen = () => (
   <main className="grid min-h-screen place-items-center bg-brand-cream">
-    <p className="bg-white px-5 py-4 text-sm font-black uppercase tracking-widest neo-border neo-shadow">Loading dashboard...</p>
+    <p className="bg-white px-4 py-3 text-xs font-black uppercase tracking-widest neo-border neo-shadow">Loading dashboard...</p>
   </main>
 );

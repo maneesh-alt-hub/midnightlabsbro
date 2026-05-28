@@ -9,7 +9,7 @@ const badgeClasses: Record<ProjectStatus, string> = {
 };
 
 export const StatusBadge = ({ status }: { status: ProjectStatus }) => (
-  <span className={`inline-flex items-center px-3 py-1 text-[10px] font-black uppercase tracking-widest neo-border ${badgeClasses[status]}`}>
+  <span className={`inline-flex items-center whitespace-nowrap px-2.5 py-1 text-[10px] font-black uppercase tracking-widest neo-border ${badgeClasses[status]}`}>
     {statusLabels[status]}
   </span>
 );

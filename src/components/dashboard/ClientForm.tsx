@@ -48,9 +48,9 @@ export const ClientForm = ({
   };
 
   return (
-    <form onSubmit={submit} className="space-y-5 bg-white p-6 neo-border neo-shadow">
-      <h2 className="text-2xl font-black uppercase tracking-normal">{submitLabel}</h2>
-      <div className="grid gap-5 md:grid-cols-2">
+    <form onSubmit={submit} className="space-y-3 bg-white p-4 neo-border neo-shadow">
+      <h2 className="text-lg font-black uppercase tracking-normal">{submitLabel}</h2>
+      <div className="grid gap-3 md:grid-cols-2">
         <Field label="Name" value={form.name} onChange={(value) => update('name', value)} />
         <Field label="Email" type="email" value={form.email} onChange={(value) => update('email', value)} />
         <Field label="Phone" value={form.phone} onChange={(value) => update('phone', value)} required={false} />
@@ -61,7 +61,7 @@ export const ClientForm = ({
       <button
         type="submit"
         disabled={isSaving}
-        className="w-full bg-brand-primary px-5 py-4 text-sm font-black uppercase tracking-widest text-white neo-border neo-shadow-hover disabled:cursor-wait disabled:opacity-70"
+        className="w-full bg-brand-primary px-4 py-3 text-xs font-black uppercase tracking-widest text-white neo-border neo-shadow-hover disabled:cursor-wait disabled:opacity-70"
       >
         {isSaving ? 'Creating...' : submitLabel}
       </button>
@@ -85,12 +85,12 @@ const Field = ({
   minLength?: number;
 }) => (
   <label className="block">
-    <span className="mb-2 block text-xs font-black uppercase tracking-widest">{label}</span>
+    <span className="mb-1.5 block text-[11px] font-black uppercase tracking-widest">{label}</span>
     <input
       type={type}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full bg-brand-cream px-3 py-3 text-sm font-bold outline-none neo-border"
+      className="w-full bg-brand-cream px-3 py-2 text-sm font-bold outline-none neo-border"
       required={required}
       minLength={minLength}
     />

@@ -73,16 +73,16 @@ export const ProjectForm = ({
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4 bg-white p-5 neo-border neo-shadow">
-      <h2 className="text-xl font-black uppercase tracking-normal">{submitLabel}</h2>
-      <div className="grid gap-4 md:grid-cols-2">
+    <form onSubmit={submit} className="space-y-3 bg-white p-4 neo-border neo-shadow">
+      <h2 className="text-lg font-black uppercase tracking-normal">{submitLabel}</h2>
+      <div className="grid gap-3 md:grid-cols-2">
         <Field label="Project name" value={form.name} onChange={(value) => update('name', value)} />
         <label className="block">
-          <span className="mb-2 block text-xs font-black uppercase tracking-widest">Client</span>
+          <span className="mb-1.5 block text-[11px] font-black uppercase tracking-widest">Client</span>
           <select
             value={form.client_id}
             onChange={(event) => update('client_id', event.target.value)}
-            className="w-full bg-brand-cream px-3 py-3 text-sm font-bold outline-none neo-border"
+            className="w-full bg-brand-cream px-3 py-2 text-sm font-bold outline-none neo-border"
             required
           >
             <option value="">Select client</option>
@@ -95,21 +95,21 @@ export const ProjectForm = ({
         </label>
       </div>
       <label className="block">
-        <span className="mb-2 block text-xs font-black uppercase tracking-widest">Description</span>
+        <span className="mb-1.5 block text-[11px] font-black uppercase tracking-widest">Description</span>
         <textarea
           value={form.description}
           onChange={(event) => update('description', event.target.value)}
-          className="min-h-28 w-full bg-brand-cream px-3 py-3 text-sm font-bold outline-none neo-border"
+          className="min-h-20 w-full bg-brand-cream px-3 py-2 text-sm font-bold outline-none neo-border"
           required
         />
       </label>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3">
         <label className="block">
-          <span className="mb-2 block text-xs font-black uppercase tracking-widest">Status</span>
+          <span className="mb-1.5 block text-[11px] font-black uppercase tracking-widest">Status</span>
           <select
             value={form.status}
             onChange={(event) => update('status', event.target.value as ProjectStatus)}
-            className="w-full bg-brand-cream px-3 py-3 text-sm font-bold outline-none neo-border"
+            className="w-full bg-brand-cream px-3 py-2 text-sm font-bold outline-none neo-border"
           >
             <option value="not_started">Not Started</option>
             <option value="in_progress">In Progress</option>
@@ -119,31 +119,31 @@ export const ProjectForm = ({
         <Field label="Start date" type="date" value={form.start_date} onChange={(value) => update('start_date', value)} />
         <Field label="Deadline" type="date" value={form.deadline} onChange={(value) => update('deadline', value)} />
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         <Field label="Total price" type="number" value={String(form.total_price)} onChange={(value) => update('total_price', value)} />
         <Field label="Amount paid" type="number" value={String(form.amount_paid)} onChange={(value) => update('amount_paid', value)} />
       </div>
       <label className="block">
-        <span className="mb-2 block text-xs font-black uppercase tracking-widest">Completed work</span>
+        <span className="mb-1.5 block text-[11px] font-black uppercase tracking-widest">Progress updates</span>
         <textarea
           value={form.completed_work}
           onChange={(event) => update('completed_work', event.target.value)}
-          className="min-h-24 w-full bg-brand-cream px-3 py-3 text-sm font-bold outline-none neo-border"
+          className="min-h-16 w-full bg-brand-cream px-3 py-2 text-sm font-bold outline-none neo-border"
         />
       </label>
       <label className="block">
-        <span className="mb-2 block text-xs font-black uppercase tracking-widest">Internal notes</span>
+        <span className="mb-1.5 block text-[11px] font-black uppercase tracking-widest">Internal notes</span>
         <textarea
           value={form.notes}
           onChange={(event) => update('notes', event.target.value)}
-          className="min-h-24 w-full bg-brand-cream px-3 py-3 text-sm font-bold outline-none neo-border"
+          className="min-h-16 w-full bg-brand-cream px-3 py-2 text-sm font-bold outline-none neo-border"
         />
       </label>
       {error && <p className="bg-brand-primary px-3 py-3 text-sm font-bold text-white neo-border">{error}</p>}
       <button
         type="submit"
         disabled={isSaving}
-        className="w-full bg-brand-primary px-5 py-4 text-sm font-black uppercase tracking-widest text-white neo-border neo-shadow-hover disabled:cursor-wait disabled:opacity-70"
+        className="w-full bg-brand-primary px-4 py-3 text-xs font-black uppercase tracking-widest text-white neo-border neo-shadow-hover disabled:cursor-wait disabled:opacity-70"
       >
         {isSaving ? 'Saving...' : submitLabel}
       </button>
@@ -163,12 +163,12 @@ const Field = ({
   type?: string;
 }) => (
   <label className="block">
-    <span className="mb-2 block text-xs font-black uppercase tracking-widest">{label}</span>
+    <span className="mb-1.5 block text-[11px] font-black uppercase tracking-widest">{label}</span>
     <input
       type={type}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full bg-brand-cream px-3 py-3 text-sm font-bold outline-none neo-border"
+      className="w-full bg-brand-cream px-3 py-2 text-sm font-bold outline-none neo-border"
       required
     />
   </label>
