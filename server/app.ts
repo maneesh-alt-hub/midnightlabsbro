@@ -1,5 +1,4 @@
 import express from 'express';
-import { isDatabaseUnavailable } from './db/dbErrors.js';
 import { authRoutes } from './routes/authRoutes.js';
 import { projectRoutes } from './routes/projectRoutes.js';
 import { userRoutes } from './routes/userRoutes.js';
@@ -16,12 +15,7 @@ export const createApiApp = () => {
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error(error);
 
-    if (isDatabaseUnavailable(error)) {
-      res.status(503).json({ error: 'Database is not connected. Start PostgreSQL and run the seed script, then try again.' });
-      return;
-    }
-
-    res.status(500).json({ error: 'Something went wrong on the server.' });
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Something went wrong on the server.' });
   });
 
   return app;

@@ -69,4 +69,9 @@ export const updateProject = (id: string, payload: ProjectPayload) =>
     body: JSON.stringify(payload),
   });
 
+export const deleteProject = (id: string) =>
+  request<{ ok: true }>(`/api/projects/${id}`, {
+    method: 'DELETE',
+  });
+
 export const dashboardPath = (role: AuthUser['role']) => (role === 'admin' ? '/admin/dashboard' : '/client/dashboard');

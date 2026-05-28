@@ -1,19 +1,19 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
   phone TEXT,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'client')),
   company TEXT,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'client')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS projects (
+CREATE TABLE IF NOT EXISTS public.projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('not_started', 'in_progress', 'completed')),
@@ -26,5 +26,5 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS projects_client_id_idx ON projects(client_id);
-CREATE INDEX IF NOT EXISTS projects_status_idx ON projects(status);
+CREATE INDEX IF NOT EXISTS projects_client_id_idx ON public.projects(client_id);
+CREATE INDEX IF NOT EXISTS projects_status_idx ON public.projects(status);

@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 import type { AuthedRequest } from '../middleware/authMiddleware.js';
-import { createProject, findProjectById, isStatus, listProjects, updateProject, type ProjectInput } from '../models/projectModel.js';
+import { createProject, deleteProject, findProjectById, isStatus, listProjects, updateProject, type ProjectInput } from '../models/projectModel.js';
 
 const parseProjectInput = (body: Record<string, unknown>): ProjectInput | null => {
   const status = String(body.status ?? '');
@@ -71,4 +71,15 @@ export const putProject = async (req: AuthedRequest, res: Response) => {
   }
 
   res.json({ project });
+};
+
+export const removeProject = async (req: AuthedRequest, res: Response) => {
+  const project = await findProjectById(req.params.id);
+  if (!project) {
+    res.status(404).json({ error: 'Project not found.' });
+    return;
+  }
+
+  await deleteProject(req.params.id);
+  res.json({ ok: true });
 };

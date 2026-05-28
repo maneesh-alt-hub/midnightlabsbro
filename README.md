@@ -7,13 +7,13 @@ Existing neobrutalist landing page plus a client/admin project dashboard.
 Prerequisites:
 
 - Node.js
-- PostgreSQL
+- Supabase project
 
 1. Install dependencies: `npm install`
 2. Copy `.env.example` to `.env.local`
-3. Set `DATABASE_URL` and `JWT_SECRET`
-4. Create the PostgreSQL database named in `DATABASE_URL`
-5. Create tables and sample data: `npm run db:seed`
+3. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `JWT_SECRET`
+4. Run the SQL in `server/db/schema.supabase.sql` in the Supabase SQL editor
+5. Create admin accounts: `npm run db:seed`
 6. Start the full-stack app: `npm run dev`
 7. Open `http://localhost:3000`
 
@@ -36,11 +36,9 @@ Prerequisites:
 
 No client accounts or projects are created by default. New clients can sign up at `/signup`.
 
-If PostgreSQL is not running in local development, the server falls back to a temporary in-memory seed with the same admin account so the dashboard can still be tested. Use PostgreSQL plus `npm run db:seed` for real persistence.
-
 ## Database
 
-Schema lives in `server/db/schema.sql`.
+Schema lives in `server/db/schema.supabase.sql`.
 
 Tables:
 

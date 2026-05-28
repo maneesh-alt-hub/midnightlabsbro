@@ -1,11 +1,12 @@
-import { query } from '../db/pool.js';
-import { isDatabaseUnavailable } from '../db/dbErrors.js';
-import { devStore } from '../db/devStore.js';
+import { getSupabase } from '../db/supabase.js';
 import type { AuthUser, UserRole } from '../types.js';
 
-interface UserRow extends AuthUser {
+export interface UserRow extends AuthUser {
   password: string;
 }
+
+const userColumns = 'id, name, email, password, phone, role, company';
+const clientColumns = 'id, name, email, phone, role, company';
 
 const publicUser = (user: UserRow): AuthUser => ({
   id: user.id,
@@ -17,60 +18,59 @@ const publicUser = (user: UserRow): AuthUser => ({
 });
 
 export const findUserByEmail = async (email: string) => {
-  try {
-    const result = await query<UserRow>(
-      'SELECT id, name, email, password, phone, role, company FROM users WHERE email = $1',
-      [email.trim().toLowerCase()],
-    );
+  const { data, error } = await getSupabase()
+    .from('users')
+    .select(userColumns)
+    .eq('email', email.trim().toLowerCase())
+    .single<UserRow>();
 
-    return result.rows[0] ?? null;
-  } catch (error) {
-    if (isDatabaseUnavailable(error)) return devStore.findUserByEmail(email);
-    throw error;
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw new Error(error.message);
   }
+
+  return data;
 };
 
 export const findUserById = async (id: string) => {
-  try {
-    const result = await query<UserRow>('SELECT id, name, email, password, phone, role, company FROM users WHERE id = $1', [id]);
-    const user = result.rows[0];
-    return user ? publicUser(user) : null;
-  } catch (error) {
-    if (isDatabaseUnavailable(error)) return devStore.findUserById(id);
-    throw error;
+  const { data, error } = await getSupabase().from('users').select(userColumns).eq('id', id).single<UserRow>();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw new Error(error.message);
   }
+
+  return publicUser(data);
 };
 
 export const listClients = async () => {
-  try {
-    const result = await query<AuthUser>(
-      "SELECT id, name, email, phone, role, company FROM users WHERE role = 'client' ORDER BY name ASC",
-    );
-    return result.rows;
-  } catch (error) {
-    if (isDatabaseUnavailable(error)) return devStore.listClients();
-    throw error;
-  }
+  const { data, error } = await getSupabase().from('users').select(clientColumns).eq('role', 'client').order('name', { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []) as AuthUser[];
 };
 
 export const createClientUser = async (input: { name: string; email: string; password: string; phone?: string; company?: string }) => {
-  try {
-    const result = await query<AuthUser>(
-      `
-        INSERT INTO users (name, email, password, phone, role, company)
-        VALUES ($1, $2, $3, $4, 'client', $5)
-        RETURNING id, name, email, phone, role, company
-      `,
-      [input.name.trim(), input.email.trim().toLowerCase(), input.password, input.phone?.trim() || null, input.company?.trim() || null],
-    );
+  const { data, error } = await getSupabase()
+    .from('users')
+    .insert({
+      name: input.name.trim(),
+      email: input.email.trim().toLowerCase(),
+      password: input.password,
+      phone: input.phone?.trim() || null,
+      role: 'client',
+      company: input.company?.trim() || null,
+    })
+    .select(clientColumns)
+    .single<AuthUser>();
 
-    return result.rows[0];
-  } catch (error) {
-    if (isDatabaseUnavailable(error)) return devStore.createClient(input);
-    const dbError = error as { code?: string };
-    if (dbError.code === '23505') throw new Error('An account with this email already exists.');
-    throw error;
+  if (error) {
+    if (error.code === '23505') throw new Error('An account with this email already exists.');
+    throw new Error(error.message);
   }
+
+  return data;
 };
 
 export const toPublicUser = publicUser;

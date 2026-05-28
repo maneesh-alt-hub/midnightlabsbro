@@ -1,57 +1,42 @@
 import bcrypt from 'bcrypt';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { pool, query } from './pool.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { getSupabase } from './supabase.js';
 
 const hash = (password: string) => bcrypt.hash(password, 12);
 
 const runSeed = async () => {
-  const schema = await fs.readFile(path.resolve(__dirname, 'schema.sql'), 'utf8');
-  await query(schema);
-
   const adminPassword = await hash('midnight-admin');
-  const ownerAdminPassword = await hash('midnight-admin');
-  const admin = await query<{ id: string }>(
-    `
-      INSERT INTO users (name, email, password, phone, role, company)
-      VALUES ($1, $2, $3, $4, 'admin', $5)
-      ON CONFLICT (email) DO UPDATE SET
-        name = EXCLUDED.name,
-        password = EXCLUDED.password,
-        phone = EXCLUDED.phone,
-        role = EXCLUDED.role,
-        company = EXCLUDED.company
-      RETURNING id
-    `,
-    ['Midnight Admin', 'admin@midnightlabs.dev', adminPassword, '+91 90000 00001', 'Midnight Labs'],
-  );
 
-  await query<{ id: string }>(
-    `
-      INSERT INTO users (name, email, password, phone, role, company)
-      VALUES ($1, $2, $3, $4, 'admin', $5)
-      ON CONFLICT (email) DO UPDATE SET
-        name = EXCLUDED.name,
-        password = EXCLUDED.password,
-        phone = EXCLUDED.phone,
-        role = EXCLUDED.role,
-        company = EXCLUDED.company
-      RETURNING id
-    `,
-    ['Maneesh Admin', 'maneeshkhandavalliwork@gmail.com', ownerAdminPassword, '+91 90000 00005', 'Midnight Labs'],
-  );
+  const { data, error } = await getSupabase()
+    .from('users')
+    .upsert(
+      [
+        {
+          name: 'Midnight Admin',
+          email: 'admin@midnightlabs.dev',
+          password: adminPassword,
+          phone: '+91 90000 00001',
+          role: 'admin',
+          company: 'Midnight Labs',
+        },
+        {
+          name: 'Maneesh Admin',
+          email: 'maneeshkhandavalliwork@gmail.com',
+          password: adminPassword,
+          phone: '+91 90000 00005',
+          role: 'admin',
+          company: 'Midnight Labs',
+        },
+      ],
+      { onConflict: 'email' },
+    )
+    .select('id, email');
 
-  await query('DELETE FROM projects');
+  if (error) throw new Error(error.message);
 
-  console.log(`Seed complete. Admin id: ${admin.rows[0].id}`);
+  console.log(`Seed complete. Admin accounts: ${data?.map((user) => user.email).join(', ')}`);
 };
 
-runSeed()
-  .catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  })
-  .finally(() => pool.end());
+runSeed().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

@@ -1,6 +1,4 @@
-import { query } from '../db/pool.js';
-import { isDatabaseUnavailable } from '../db/dbErrors.js';
-import { devStore } from '../db/devStore.js';
+import { getSupabase } from '../db/supabase.js';
 import type { Project, ProjectStatus } from '../types.js';
 
 export interface ProjectInput {
@@ -16,129 +14,130 @@ export interface ProjectInput {
   completed_work?: string;
 }
 
-const projectSelect = `
-  SELECT
-    p.id,
-    p.client_id,
-    p.name,
-    p.description,
-    p.status,
-    p.start_date::text,
-    p.deadline::text,
-    p.total_price::text,
-    p.amount_paid::text,
-    p.notes,
-    p.completed_work,
-    p.created_at::text,
-    u.name AS client_name,
-    u.email AS client_email,
-    u.phone AS client_phone,
-    u.company AS client_company
-  FROM projects p
-  JOIN users u ON u.id = p.client_id
+type SupabaseProject = Omit<Project, 'client_name' | 'client_email' | 'client_phone' | 'client_company'> & {
+  users:
+    | {
+        name: string;
+        email: string;
+        phone: string | null;
+        company: string | null;
+      }
+    | Array<{
+        name: string;
+        email: string;
+        phone: string | null;
+        company: string | null;
+      }>;
+};
+
+const projectColumns = `
+  id,
+  client_id,
+  name,
+  description,
+  status,
+  start_date,
+  deadline,
+  total_price,
+  amount_paid,
+  notes,
+  completed_work,
+  created_at,
+  users:client_id (
+    name,
+    email,
+    phone,
+    company
+  )
 `;
 
+const normalizeProject = (project: SupabaseProject): Project => {
+  const client = Array.isArray(project.users) ? project.users[0] : project.users;
+
+  return {
+    id: project.id,
+    client_id: project.client_id,
+    name: project.name,
+    description: project.description,
+    status: project.status,
+    start_date: project.start_date,
+    deadline: project.deadline,
+    total_price: String(project.total_price),
+    amount_paid: String(project.amount_paid),
+    notes: project.notes,
+    completed_work: project.completed_work,
+    created_at: project.created_at,
+    client_name: client?.name ?? 'Unknown client',
+    client_email: client?.email ?? '',
+    client_phone: client?.phone ?? null,
+    client_company: client?.company ?? null,
+  };
+};
+
+const projectPayload = (input: ProjectInput) => ({
+  client_id: input.client_id,
+  name: input.name,
+  description: input.description,
+  status: input.status,
+  start_date: input.start_date,
+  deadline: input.deadline,
+  total_price: input.total_price,
+  amount_paid: input.amount_paid,
+  notes: input.notes ?? '',
+  completed_work: input.completed_work ?? '',
+});
+
 export const listProjects = async (status?: ProjectStatus, clientId?: string) => {
-  const conditions: string[] = [];
-  const params: unknown[] = [];
+  let request = getSupabase().from('projects').select(projectColumns).order('deadline', { ascending: true });
 
-  if (status) {
-    params.push(status);
-    conditions.push(`p.status = $${params.length}`);
-  }
+  if (status) request = request.eq('status', status);
+  if (clientId) request = request.eq('client_id', clientId);
 
-  if (clientId) {
-    params.push(clientId);
-    conditions.push(`p.client_id = $${params.length}`);
-  }
+  const { data, error } = await request.returns<SupabaseProject[]>();
 
-  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-  try {
-    const result = await query<Project>(`${projectSelect} ${where} ORDER BY p.deadline ASC`, params);
-    return result.rows;
-  } catch (error) {
-    if (isDatabaseUnavailable(error)) return devStore.listProjects(status, clientId);
-    throw error;
-  }
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map(normalizeProject);
 };
 
 export const findProjectById = async (id: string) => {
-  try {
-    const result = await query<Project>(`${projectSelect} WHERE p.id = $1`, [id]);
-    return result.rows[0] ?? null;
-  } catch (error) {
-    if (isDatabaseUnavailable(error)) return devStore.findProjectById(id);
-    throw error;
+  const { data, error } = await getSupabase().from('projects').select(projectColumns).eq('id', id).single<SupabaseProject>();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw new Error(error.message);
   }
+
+  return normalizeProject(data);
 };
 
 export const createProject = async (input: ProjectInput) => {
-  try {
-    const result = await query<Project>(
-      `
-        INSERT INTO projects
-          (client_id, name, description, status, start_date, deadline, total_price, amount_paid, notes, completed_work)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id
-      `,
-      [
-        input.client_id,
-        input.name,
-        input.description,
-        input.status,
-        input.start_date,
-        input.deadline,
-        input.total_price,
-        input.amount_paid,
-        input.notes ?? '',
-        input.completed_work ?? '',
-      ],
-    );
+  const { data, error } = await getSupabase().from('projects').insert(projectPayload(input)).select(projectColumns).single<SupabaseProject>();
 
-    return findProjectById(result.rows[0].id);
-  } catch (error) {
-    if (isDatabaseUnavailable(error)) return devStore.createProject(input);
-    throw error;
-  }
+  if (error) throw new Error(error.message);
+
+  return normalizeProject(data);
 };
 
 export const updateProject = async (id: string, input: ProjectInput) => {
-  try {
-    await query(
-      `
-        UPDATE projects
-        SET client_id = $1,
-            name = $2,
-            description = $3,
-            status = $4,
-            start_date = $5,
-            deadline = $6,
-            total_price = $7,
-            amount_paid = $8,
-            notes = $9,
-            completed_work = $10
-        WHERE id = $11
-      `,
-      [
-        input.client_id,
-        input.name,
-        input.description,
-        input.status,
-        input.start_date,
-        input.deadline,
-        input.total_price,
-        input.amount_paid,
-        input.notes ?? '',
-        input.completed_work ?? '',
-        id,
-      ],
-    );
+  const { data, error } = await getSupabase()
+    .from('projects')
+    .update(projectPayload(input))
+    .eq('id', id)
+    .select(projectColumns)
+    .single<SupabaseProject>();
 
-    return findProjectById(id);
-  } catch (error) {
-    if (isDatabaseUnavailable(error)) return devStore.updateProject(id, input);
-    throw error;
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw new Error(error.message);
   }
+
+  return normalizeProject(data);
+};
+
+export const deleteProject = async (id: string) => {
+  const { error } = await getSupabase().from('projects').delete().eq('id', id);
+  if (error) throw new Error(error.message);
 };
 
 export const isStatus = (value: string): value is ProjectStatus =>
