@@ -4,9 +4,22 @@ import path from 'node:path';
 import { createServer as createViteServer } from 'vite';
 import { env, isProduction } from './config/env.js';
 import { createApiApp } from './app.js';
+import { getSessionUser } from './middleware/authMiddleware.js';
 
 const root = process.cwd();
 const app = createApiApp();
+
+app.use(['/admin', '/client'], (req, res, next) => {
+  const requiredRole = req.originalUrl.startsWith('/admin') ? 'admin' : 'client';
+  const user = getSessionUser(req);
+
+  if (!user || user.role !== requiredRole) {
+    res.redirect('/login');
+    return;
+  }
+
+  next();
+});
 
 if (isProduction) {
   app.use(express.static(path.resolve(root, 'dist')));

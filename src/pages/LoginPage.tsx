@@ -1,21 +1,13 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, LockKeyhole, Mail } from 'lucide-react';
-import { dashboardPath, getSession, login } from '../lib/api.ts';
+import { dashboardPath, login } from '../lib/api.ts';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    getSession()
-      .then(({ user }) => {
-        if (user) window.location.replace(dashboardPath(user.role));
-      })
-      .catch(() => undefined);
-  }, []);
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
